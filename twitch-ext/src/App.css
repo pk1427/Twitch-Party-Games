@@ -1,0 +1,9 @@
+/* Reset default margin and padding */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+}
+
+

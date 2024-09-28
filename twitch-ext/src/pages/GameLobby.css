@@ -1,0 +1,5 @@
+.game-lobby-container {
+    background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+    min-height: 98vh;
+   margin: 20px;
+  }

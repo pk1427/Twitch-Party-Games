@@ -1,0 +1,38 @@
+{
+  "short_name": "Twitch Party Games",
+  "name": "Twitch Party Games Extension",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "index.html",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "description": "A Twitch extension for interactive party games.",
+  "version": "1.0",
+  "permissions": ["chat:read", "chat:edit"],
+  "browser_action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "favicon.ico",
+      "48": "logo192.png",
+      "128": "logo512.png"
+    }
+  },
+  "manifest_version": 2,
+  "author": "Your Name"
+}

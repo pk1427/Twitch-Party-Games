@@ -1,0 +1,278 @@
+/* /src/components/FirstPage.css */
+.first-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+ /* Soft pink to light blue gradient */
+ background-size: cover;
+ min-height: 100vh;
+ padding: 20px;
+ color: #333;
+ /* Darker text for better readability */
+
+}
+
+
+
+.header {
+  display: flex;
+  justify-content: center; /* Center all items in the header */
+  align-items: center;
+  width: 1440px; /* Adjust width to fill the container */
+  padding: 20px;
+  background-color: #15101e;
+  color: white;
+  border-radius: 10px;
+}
+
+.login-buttons {
+  display: flex; /* Align buttons in a row */
+  gap: 15px; /* Add some space between the buttons */
+  margin-left: 20px; /* Space from the title if needed */
+}
+
+
+.logo {
+  height: 70px;
+}
+
+.app-title {
+  font-size: 2.5rem;
+  margin: 0;
+  color: #ffcc00;
+  text-transform: uppercase; 
+  letter-spacing: 2px;
+  font-weight: bold;
+  text-align: center;
+  transition: color 0.3s ease;
+  flex: 1;
+}
+
+.app-title:hover {
+  color: #ff9900; 
+}
+
+
+
+.login-button {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  color: #9146ff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-top: 10px;
+  border-radius: 50px;
+  transition: background-color 0.3s;
+  font-weight: bold;
+}
+
+.login-button:hover {
+  background-color: #e6e6e6;
+}
+
+.twitch-logo {
+  max-width: 25px;
+  margin-right: 5px;
+}
+
+.user-info{
+  display: flex;
+    /* align-items: center; */
+  display: flex;
+}
+
+.user-info img{
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 3px solid #6441a5;
+}
+
+.user-info h2{
+  font-size: 1.3rem;
+    margin-right: 10px;
+    font-weight: bold;
+
+}
+
+
+/* main-content */
+
+.main-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 50px 0;
+  padding: 20px;
+  width: 1200px;
+  background-color: rgb(22, 21, 21);
+  border-radius: 10px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-message {
+  font-size: 3.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 20px 0;
+  color: #000;
+  /* Default text color */
+  background-image: linear-gradient(90deg, #ff007f, #7f00ff, #00bfff, #00ff7f);
+  /* Gradient colors */
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: color-change 5s ease-in-out infinite;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+@keyframes color-change {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.welcome-image {
+  max-width: 400px;
+  height: auto;
+  border-radius: 8px;
+}
+
+
+
+.feature-highlights {
+  display: flex;
+  justify-content: space-between;
+  /* Distribute cards evenly */
+  gap: 20px;
+  /* Space between the cards */
+  padding: 40px;
+}
+
+.feature {
+  background-color: rgb(148, 161, 215);
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+  flex: 1;
+  /* Make each feature grow equally to fill space */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* min-width: 250px;  */
+  height: 400px;
+  width: 400px;
+}
+
+
+.feature img {
+  width: 300px;
+  height: 280px;
+  object-fit: contain;
+  margin-bottom: 20px;
+}
+
+.feature h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #0e0e0e;
+}
+
+.feature p {
+  font-size: 1rem;
+  color: #000000;
+}
+
+.feature:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Call-to-Action Button */
+.cta-button {
+  background-color: #a94dd0;
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 20px 0;
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+.cta-button:hover {
+  background-color: #9146ff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.cta-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+
+/* User information */
+.user-info {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.user-info h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid #6441a5;
+}
+
+
+
+
+.footer {
+  margin-top: auto;
+  background-color: #0e0d0d;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  color: white;
+  border-radius: 10px;
+  width: 1440px;
+}
+
+.footer-link {
+  color: white;
+  margin: 0 15px;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}

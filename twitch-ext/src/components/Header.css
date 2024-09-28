@@ -1,0 +1,106 @@
+/* Header Styles */
+
+.header-lobby {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: #15101e;
+    color: white;
+    border-radius: 10px;
+}
+
+/* Logo Styling */
+.logo img {
+    height: 70px;
+    width: auto;
+}
+
+/* Title Styling */
+.title h1 {
+    font-size: 2.5rem;
+    color: #ffcc00;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: bold;
+    margin: 0;
+    text-align: center;
+    flex: 1;
+    transition: color 0.3s ease;
+}
+
+.title h1:hover {
+    color: #ff9900;
+}
+
+/* User Profile Section */
+.user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: 3px solid #6441a5;
+}
+
+.username {
+    font-size: 1.3rem;
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+/* Dropdown Styling */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    padding: 4px;
+}
+
+.dropdown-button {
+    background-color: #fff;
+    color: #9146ff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+
+.dropdown-button:hover {
+    background-color: #e6e6e6;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #15101e;
+    min-width: 100px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: rgb(177, 56, 221);
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 10px 15px;
+    text-decoration: none;
+    display: block;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.dropdown-content a:hover {
+    background-color: #333;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
