@@ -10,10 +10,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "env": "^0.0.2",
+    "express": "^4.21.0",
     "express-session": "^1.18.0",
+    "mongodb": "^6.10.0",
+    "mongoose": "^8.7.2",
     "passport": "^0.7.0",
     "passport-twitch-new": "^0.0.3",
+    "socket.io": "^4.8.0",
     "tmi.js": "^1.8.5"
   }
 }

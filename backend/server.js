@@ -6,8 +6,13 @@ const TwitchStrategy = require("passport-twitch-new").Strategy;
 const http = require("http");
 const cors = require("cors");
 require("dotenv").config();
+const socketIO = require("socket.io");
+const TriviaGame = require("./services/TriviaGameService");
+const { Server } = require('socket.io');
+
 
 const app = express();
+
 const port = process.env.PORT || 3000;
 
 // Enable CORS to allow requests from frontend
@@ -29,20 +34,12 @@ const sessionMiddleware = session({
   },
 });
 
-// Use the session middleware in express
+// Use the session middleware in express and socket.io
 app.use(sessionMiddleware);
 
 // Initialize passport for Twitch OAuth
 app.use(passport.initialize());
 app.use(passport.session());
-
-app.use(
-  session({
-    secret: "prasadkapure", // Change this to a secure key
-    resave: false,
-    saveUninitialized: true,
-  })
-);
 
 // Configure Passport to use Twitch OAuth
 passport.use(
@@ -54,38 +51,19 @@ passport.use(
       scope: ["user:read:email", "channel:read:subscriptions"], // Updated scopes if needed
     },
     (accessToken, refreshToken, profile, done) => {
-      // Extract relevant information from the Twitch profile
       const userProfile = {
         id: profile.id,
         display_name: profile.display_name || profile.username, // Use display_name if available
         email: profile.email,
         profile_image_url: profile.profile_image_url || null, // Handle missing profile image
+        role: profile.display_name === process.env.TWITCH_STREAMER_NAME ? "streamer" : "viewer",
       };
-
-      // Here you can differentiate between a streamer and a viewer based on some logic
-      // For the purpose of this example, we're just adding a hardcoded role
-      if (profile.display_name === process.env.TWITCH_STREAMER_NAME) {
-        userProfile.role = "streamer"; // Mark the user as a streamer
-      } else {
-        userProfile.role = "viewer"; // Mark everyone else as a viewer
-      }
-
       return done(null, userProfile); // Pass user profile to the session
     }
   )
 );
 
-// // Serialize and deserialize user information into the session
-// passport.serializeUser((user, done) => {
-//   done(null, user); // Serialize the entire user profile
-// });
-
-// passport.deserializeUser((user, done) => {
-//   done(null, user); // Deserialize the profile back to req.user
-// });
-
 passport.serializeUser((user, done) => {
-  user.role = user.role; // Default role if not already set
   done(null, user);
 });
 
@@ -95,12 +73,11 @@ passport.deserializeUser((obj, done) => {
 
 // Authentication route for regular users
 app.get("/auth/twitch", passport.authenticate("twitch"));
+
 // Authentication route for streamers
 app.get("/auth/twitch/streamer", (req, res, next) => {
   req.session.role = "streamer"; // Set session role for streamers
-  const role = "streamer"; // Set the role as "streamer"
-
-  console.log("Streamer route: setting session role to streamer");
+  const role = "streamer";
   passport.authenticate("twitch", {
     state: JSON.stringify({ role }),
     scope: [
@@ -115,10 +92,7 @@ app.get("/auth/twitch/streamer", (req, res, next) => {
 // Authentication route for viewers
 app.get("/auth/twitch/viewer", (req, res, next) => {
   req.session.role = "viewer"; // Set session role for viewers
-  console.log(req.session.role);
-  const role = "viewer"; // Set the role as "viewer"
-
-  console.log("Viewer route: setting session role to viewer");
+  const role = "viewer";
   passport.authenticate("twitch", {
     state: JSON.stringify({ role }),
     scope: ["user:read:email"],
@@ -130,24 +104,34 @@ app.get(
   "/auth/twitch/callback",
   passport.authenticate("twitch", { failureRedirect: "/" }),
   (req, res) => {
-    console.log("Callback: req.session", req.session);
-    console.log("Callback: req.user", req.user);
-
-    // Ensure role is properly set
     const state = req.query.state ? JSON.parse(req.query.state) : {};
-    const role = state.role || "notdefined"; // Get the role from the state or default to "viewer"
+    const role = state.role || "viewer"; // Default to viewer if no role
     req.user.role = role;
     res.redirect(`http://localhost:4000/lobby?role=${role}`);
   }
 );
+
 // Route to logout the user
 app.get("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) {
-      return next(err); // Pass error to default error handler
+      return next(err);
     }
-    res.redirect("http://localhost:4000"); // Redirect to frontend homepage after logout
+    res.redirect("http://localhost:4000"); // Redirect to frontend after logout
   });
+});
+
+// Route to fetch logged-in user's profile data
+app.get("/user", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({
+      display_name: req.user.display_name,
+      profile_image_url: req.user.profile_image_url,
+      role: req.user.role,
+    });
+  } else {
+    res.status(401).json({ message: "Not logged in" });
+  }
 });
 
 // Basic route for server status and user display name
@@ -157,19 +141,6 @@ app.get("/", (req, res) => {
       req.user ? req.user.display_name : "Not logged in"
     }`
   );
-});
-
-// Route to fetch logged-in user's profile data
-app.get("/user", (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({
-      display_name: req.user.display_name,
-      profile_image_url: req.user.profile_image_url,
-      role: req.user.role, // Include the user's role in the response
-    });
-  } else {
-    res.status(401).json({ message: "Not logged in" });
-  }
 });
 
 // Twitch client setup for interacting with Twitch chat
@@ -197,8 +168,7 @@ const connectToTwitch = async () => {
 
 // Handle incoming chat messages from Twitch
 twitchClient.on("chat", (channel, userstate, message, self) => {
-  if (self) return; // Ignore messages from the bot itself
-
+  if (self) return;
   console.log(`Message from ${userstate.username}: ${message}`);
   // Handle incoming chat messages (e.g., broadcast to clients)
 });
@@ -206,7 +176,165 @@ twitchClient.on("chat", (channel, userstate, message, self) => {
 // Initialize Twitch connection
 connectToTwitch();
 
-// Start the Express server
-app.listen(port, () => {
+// HTTP server and WebSocket setup
+const server = http.createServer(app);
+
+// Share session middleware with socket.io
+
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:4000', // Allow the frontend origin
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, socket.request.res || {}, next);
+});
+
+
+// Handle WebSocket connections
+io.on("connection", (socket) => {
+  console.log("New client connected: ", socket.id);
+
+  // Start the trivia game when the client sends a 'start-game' event
+  socket.on("start-game", () => {
+    const question = TriviaGame.startGame();
+    if (question) {
+      io.emit("new-question", question); // Broadcast the first question
+    }
+  });
+
+  // Handle answer submission
+  socket.on("submit-answer", (data) => {
+    const { player, answer } = data;
+    const isCorrect = TriviaGame.checkAnswer(player, answer);
+
+    if (isCorrect) {
+      socket.emit("correct-answer", { message: "Correct!" });
+    } else {
+      socket.emit("wrong-answer", { message: "Wrong!" });
+    }
+
+    // Proceed to the next question after answering
+    const nextQuestion = TriviaGame.nextQuestion();
+    if (nextQuestion) {
+      io.emit("new-question", nextQuestion); // Broadcast the next question
+    } else {
+      const scores = TriviaGame.getScores();
+      io.emit("game-over", { scores }); // Broadcast game over and scores
+    }
+  });
+
+  // Handle client disconnect
+  socket.on("disconnect", () => {
+    console.log("Client disconnected: ", socket.id);
+  });
+});
+
+
+//tic-tac-toe
+
+const allUsers = {};
+const allRooms = [];
+
+io.on("connection", (socket) => {
+  allUsers[socket.id] = {
+    socket: socket,
+    online: true,
+  };
+
+  socket.on("request_to_play", (data) => {
+    const currentUser = allUsers[socket.id];
+    currentUser.playerName = data.playerName;
+
+    let opponentPlayer;
+
+    for (const key in allUsers) {
+      const user = allUsers[key];
+      if (user.online && !user.playing && socket.id !== key) {
+        opponentPlayer = user;
+        break;
+      }
+    }
+
+    if (opponentPlayer) {
+      allRooms.push({
+        player1: opponentPlayer,
+        player2: currentUser,
+      });
+
+      currentUser.socket.emit("OpponentFound", {
+        opponentName: opponentPlayer.playerName,
+        playingAs: "circle",
+      });
+
+      opponentPlayer.socket.emit("OpponentFound", {
+        opponentName: currentUser.playerName,
+        playingAs: "cross",
+      });
+
+      currentUser.socket.on("playerMoveFromClient", (data) => {
+        opponentPlayer.socket.emit("playerMoveFromServer", {
+          ...data,
+        });
+      });
+
+      opponentPlayer.socket.on("playerMoveFromClient", (data) => {
+        currentUser.socket.emit("playerMoveFromServer", {
+          ...data,
+        });
+      });
+    } else {
+      currentUser.socket.emit("OpponentNotFound");
+    }
+  });
+
+  socket.on("disconnect", function () {
+    const currentUser = allUsers[socket.id];
+    currentUser.online = false;
+    currentUser.playing = false;
+
+    for (let index = 0; index < allRooms.length; index++) {
+      const { player1, player2 } = allRooms[index];
+
+      if (player1.socket.id === socket.id) {
+        player2.socket.emit("opponentLeftMatch");
+        break;
+      }
+
+      if (player2.socket.id === socket.id) {
+        player1.socket.emit("opponentLeftMatch");
+        break;
+      }
+    }
+  });
+});
+ 
+//drawing 
+
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+
+  // Handle drawing data broadcast
+  socket.on("drawing", (data) => {
+    socket.broadcast.emit("drawing", data);
+  });
+
+  // Handle clear canvas action
+  socket.on("clearCanvas", () => {
+    io.emit("clearCanvas");
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
+
+// Start the server
+server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+

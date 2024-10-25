@@ -1,16 +1,24 @@
 import React from "react";
+import './StreamerControls.css';
+import webSocketService from '../services/WebSocketService'; // Import the updated WebSocket service
 
 const StreamerControls = () => {
   const handleStartGame = () => {
-    console.log("Game started!");
+    const gameId = "game-123"; // Example game ID, replace with real ID
+    webSocketService.startGame(gameId); // Trigger the startGame function in WebSocketService
+    console.log(`Game with ID ${gameId} started!`);
   };
 
   const handleManagePlayers = () => {
-    console.log("Manage players clicked");
+    const gameId = "game-123"; // Example game ID
+    webSocketService.managePlayers(gameId); // Trigger managePlayers in WebSocketService
+    console.log(`Managing players for game with ID ${gameId}`);
   };
 
   const handleKickPlayer = () => {
-    console.log("Kick player clicked");
+    const playerId = "player-456"; // Example player ID, replace with actual player ID
+    webSocketService.kickPlayer(playerId); // Trigger kickPlayer in WebSocketService
+    console.log(`Player with ID ${playerId} kicked!`);
   };
 
   return (

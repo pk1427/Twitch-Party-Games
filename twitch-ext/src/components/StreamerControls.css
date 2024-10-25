@@ -1,0 +1,40 @@
+.streamer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .streamer-controls__btn {
+    background-color: #a831a4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    width: 55%;
+    max-width: 300px;
+  }
+  
+  .streamer-controls__btn:hover {
+    background-color: #f007ed;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .streamer-controls__btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    .streamer-controls__btn {
+      width: 80%;
+    }
+  }
+  
