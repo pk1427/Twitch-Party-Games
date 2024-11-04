@@ -18,21 +18,16 @@ const MainArea = () => {
         isStreamer={isStreamer} // Pass the streamer status to GameCard
         gameRoute="/trivia" // Pass the route to the Trivia game
       />
-      <GameCard
-        title="Guessing"
-        description="Guess the word based on clues."
-        playerCount={7}
-        isStreamer={isStreamer} // Pass the streamer status to GameCard
-        gameRoute="/guessing" // Pass the route to the Guessing game
-      />
+      
+   
       <GameCard
         title="Drawing"
         description="Draw and let others guess!"
         playerCount={5}
         isStreamer={isStreamer} // Pass the streamer status to GameCard
-        gameRoute="/drawing" // Pass the route to the Drawing game
+        gameRoute="/draw-guess" // Pass the route to the Drawing game
       />
-
+ 
       <GameCard
         title="Tic-Tac-Toe"
         description="Draw and let others guess!"

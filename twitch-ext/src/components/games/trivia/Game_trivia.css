@@ -1,0 +1,80 @@
+/* Game_trivia.css */
+
+.GameTrivia_App {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    /* background-color: #f0f4f8;  */
+    
+  background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+    font-family: 'Arial', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.GameTrivia_blobs {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1; /* Place blobs behind other content */
+}
+
+.GameTrivia_blob1,
+.GameTrivia_blob2 {
+    position: absolute;
+    width: 300px; /* Adjust blob size */
+    height: 300px; /* Adjust blob size */
+    fill: rgba(0, 150, 255, 0.2); /* Light blue with transparency */
+}
+
+.GameTrivia_blob1 {
+    top: 10%;
+    left: 20%; /* Position of blob 1 */
+}
+
+.GameTrivia_blob2 {
+    bottom: 10%;
+    right: 20%; /* Position of blob 2 */
+}
+
+.GameTrivia_welcomePage {
+    text-align: center;
+    padding: 20px;
+    z-index: 1; /* Ensure welcome page content is above blobs */
+}
+
+.GameTrivia_heading {
+    font-size: 3rem; /* Large heading */
+    color: #333; /* Dark color for contrast */
+    margin: 20px 0;
+}
+
+.GameTrivia_subHeading {
+    font-size: 1.5rem; /* Smaller subheading */
+    color: #666; /* Medium gray */
+    margin-bottom: 30px;
+}
+
+.GameTrivia_startButton {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    color: #fff; /* White text color */
+    background-color: #007BFF; /* Bootstrap primary color */
+    border: none;
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+.GameTrivia_startButton:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.GameTrivia_startButton:focus {
+    outline: none; /* Remove default outline */
+}

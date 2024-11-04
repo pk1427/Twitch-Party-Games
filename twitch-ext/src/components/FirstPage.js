@@ -16,7 +16,7 @@ const FirstPage = () => {
 
   const handleGoHome = () => {
     if (user) {
-      navigate("/lobby"); // Redirect to home if authenticated
+      navigate("/streamers"); // Redirect to home if authenticated
     } else {
       alert("Please log in first!");
     }
@@ -43,8 +43,10 @@ const FirstPage = () => {
               Login as Viewer
             </button>
             <button className="login-button" onClick={handleLoginAsStreamer}>
+            {/* <a href="/creators" className="login-button"> */}
               <img src={twitchLogo} alt="Twitch Logo" className="twitch-logo" />
               Login as Streamer
+            {/* </a> */}
             </button>
           </div>
         ) : (

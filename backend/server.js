@@ -9,6 +9,9 @@ require("dotenv").config();
 const socketIO = require("socket.io");
 const TriviaGame = require("./services/TriviaGameService");
 const { Server } = require('socket.io');
+const connectDB = require("./db");
+const Streamer = require("./models/Streamer");
+
 
 
 const app = express();
@@ -42,23 +45,85 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Configure Passport to use Twitch OAuth
+// passport.use(
+//   new TwitchStrategy(
+//     {
+//       clientID: process.env.CLIENT_ID,
+//       clientSecret: process.env.TWITCH_CLIENT_SECRET,
+//       callbackURL: "http://localhost:3000/auth/twitch/callback",
+//       scope: ["user:read:email", "channel:read:subscriptions"], // Updated scopes if needed
+//     },
+//     (accessToken, refreshToken, profile, done) => {
+//       const userProfile = {
+//         id: profile.id,
+//         display_name: profile.display_name || profile.username, // Use display_name if available
+//         email: profile.email,
+//         profile_image_url: profile.profile_image_url || null, // Handle missing profile image
+//         role: profile.display_name === process.env.TWITCH_STREAMER_NAME ? "streamer" : "viewer",
+//       };
+//       return done(null, userProfile); // Pass user profile to the session
+//     }
+//   )
+// );
+
+
+
 passport.use(
   new TwitchStrategy(
     {
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.TWITCH_CLIENT_SECRET,
       callbackURL: "http://localhost:3000/auth/twitch/callback",
-      scope: ["user:read:email", "channel:read:subscriptions"], // Updated scopes if needed
+      scope: ["user:read:email", "channel:read:subscriptions"],
+      passReqToCallback: true,
     },
-    (accessToken, refreshToken, profile, done) => {
+    async (req,accessToken, refreshToken, profile, done) => {
+      
+      const state = JSON.parse(req.query.state || '{}');
+      const role = state.role || "viewer";
+  
+      
+      console.log("state:", state);
+
       const userProfile = {
         id: profile.id,
-        display_name: profile.display_name || profile.username, // Use display_name if available
+        display_name: profile.display_name || profile.username,
         email: profile.email,
-        profile_image_url: profile.profile_image_url || null, // Handle missing profile image
-        role: profile.display_name === process.env.TWITCH_STREAMER_NAME ? "streamer" : "viewer",
+        profile_image_url: profile.profile_image_url || null,
+        // role: profile.display_name === process.env.TWITCH_STREAMER_NAME ? "streamer" : "viewer",
+        role: role,
       };
-      return done(null, userProfile); // Pass user profile to the session
+
+      console.log("User profile:", userProfile);
+
+      // Allow only users with "streamer" role to save in the database
+      if (userProfile.role !== "streamer") {
+        return done(null, userProfile); // Skip DB interaction for non-streamers
+      }
+
+      console.log("hii")
+
+      try {
+        // Check if the streamer exists in the database
+        let streamer = await Streamer.findOne({ id: profile.id });
+
+        console.log("Streamer:", streamer);
+
+        if (streamer) {
+          // Update existing streamer's online status
+          streamer.isOnline = true;
+          await streamer.save();
+        } else {
+          // Create a new streamer document
+          streamer = new Streamer({ ...userProfile, isOnline: true });
+          await streamer.save();
+        }
+
+        return done(null, userProfile);
+      } catch (error) {
+        console.error("Error storing or updating streamer in the database:", error);
+        return done(error, null);
+      }
     }
   )
 );
@@ -99,6 +164,8 @@ app.get("/auth/twitch/viewer", (req, res, next) => {
   })(req, res, next);
 });
 
+
+
 // Callback route for both user and streamer authentication
 app.get(
   "/auth/twitch/callback",
@@ -107,9 +174,28 @@ app.get(
     const state = req.query.state ? JSON.parse(req.query.state) : {};
     const role = state.role || "viewer"; // Default to viewer if no role
     req.user.role = role;
-    res.redirect(`http://localhost:4000/lobby?role=${role}`);
+    // res.redirect(`http://localhost:4000/creator?role=${role}`);
+
+    if (role === "streamer") {
+      res.redirect("http://localhost:4000/streamers");
+    } else {
+      res.redirect(`http://localhost:4000/creator?role=${role}`);
+    }
   }
 );
+
+app.get("/auth/getAllStreamers", async (req, res) => {
+
+  try {
+    const streamers = await Streamer.find();
+    res.json(streamers);
+  }
+  catch (error) {
+    console.error("Error fetching streamers:", error);
+  }
+});
+
+
 
 // Route to logout the user
 app.get("/logout", (req, res, next) => {
@@ -236,84 +322,229 @@ io.on("connection", (socket) => {
 
 //tic-tac-toe
 
+
 const allUsers = {};
 const allRooms = [];
 
+
+
+// io.on("connection", (socket) => {
+//   allUsers[socket.id] = {
+//     socket: socket,
+//     online: true,
+//   };
+
+//   socket.on("request_to_play", (data) => {
+//     const currentUser = allUsers[socket.id];
+//     currentUser.playerName = data.playerName;
+
+//     let opponentPlayer;
+
+//     for (const key in allUsers) {
+//       const user = allUsers[key];
+//       if (user.online && !user.playing && socket.id !== key) {
+//         opponentPlayer = user;
+//         break;
+//       }
+//     }
+
+//     if (opponentPlayer) {
+//       allRooms.push({
+//         player1: opponentPlayer,
+//         player2: currentUser,
+//       });
+
+//       currentUser.socket.emit("OpponentFound", {
+//         opponentName: opponentPlayer.playerName,
+//         playingAs: "circle",
+//       });
+
+//       opponentPlayer.socket.emit("OpponentFound", {
+//         opponentName: currentUser.playerName,
+//         playingAs: "cross",
+//       });
+
+//       currentUser.socket.on("playerMoveFromClient", (data) => {
+//         opponentPlayer.socket.emit("playerMoveFromServer", {
+//           ...data,
+//         });
+//       });
+
+//       opponentPlayer.socket.on("playerMoveFromClient", (data) => {
+//         currentUser.socket.emit("playerMoveFromServer", {
+//           ...data,
+//         });
+//       });
+//     } else {
+//       currentUser.socket.emit("OpponentNotFound");
+//     }
+//   });
+
+//   socket.on("disconnect", function () {
+//     const currentUser = allUsers[socket.id];
+//     currentUser.online = false;
+//     currentUser.playing = false;
+
+//     for (let index = 0; index < allRooms.length; index++) {
+//       const { player1, player2 } = allRooms[index];
+
+//       if (player1.socket.id === socket.id) {
+//         player2.socket.emit("opponentLeftMatch");
+//         break;
+//       }
+
+//       if (player2.socket.id === socket.id) {
+//         player1.socket.emit("opponentLeftMatch");
+//         break;
+//       }
+//     }
+//   });
+// });
+
+
 io.on("connection", (socket) => {
+  console.log("New connection:", socket.id);
+  
   allUsers[socket.id] = {
     socket: socket,
     online: true,
+    playing: false,
+    playerName: null  // Initialize playerName
   };
 
   socket.on("request_to_play", (data) => {
+    console.log("Play request received:", data);  // Debug log
+    
+    // Update current user's name
     const currentUser = allUsers[socket.id];
     currentUser.playerName = data.playerName;
+    
+    console.log("Current user:", {
+      id: socket.id,
+      name: currentUser.playerName,
+      playing: currentUser.playing
+    });
 
-    let opponentPlayer;
-
+    // Find an available opponent
+    let opponentPlayer = null;
     for (const key in allUsers) {
       const user = allUsers[key];
-      if (user.online && !user.playing && socket.id !== key) {
+      // Only match with players who are online, not playing, and have a name set
+      if (user.online && !user.playing && socket.id !== key && user.playerName) {
         opponentPlayer = user;
+        console.log("Found opponent:", {
+          id: key,
+          name: user.playerName,
+          playing: user.playing
+        });
         break;
       }
     }
 
     if (opponentPlayer) {
-      allRooms.push({
-        player1: opponentPlayer,
-        player2: currentUser,
+      // Double check that we have both names
+      if (!currentUser.playerName || !opponentPlayer.playerName) {
+        console.error("Missing player names:", {
+          currentUser: currentUser.playerName,
+          opponent: opponentPlayer.playerName
+        });
+        return;
+      }
+
+      // Mark both players as playing
+      currentUser.playing = true;
+      opponentPlayer.playing = true;
+
+      const roomId = `room_${Date.now()}`;
+      
+      // Create a new room
+      const newRoom = {
+        player1: {
+          ...opponentPlayer,
+          role: 'cross'
+        },
+        player2: {
+          ...currentUser,
+          role: 'circle'
+        },
+        roomId: roomId
+      };
+      allRooms.push(newRoom);
+
+      console.log("Created room:", {
+        roomId,
+        player1: opponentPlayer.playerName,
+        player2: currentUser.playerName
       });
 
+      // Emit to current user (player2/circle)
       currentUser.socket.emit("OpponentFound", {
         opponentName: opponentPlayer.playerName,
         playingAs: "circle",
+        roomId: roomId
       });
 
+      // Emit to opponent (player1/cross)
       opponentPlayer.socket.emit("OpponentFound", {
         opponentName: currentUser.playerName,
         playingAs: "cross",
+        roomId: roomId
       });
 
+      // Set up move handlers
       currentUser.socket.on("playerMoveFromClient", (data) => {
+        console.log(`Move from ${currentUser.playerName} (circle):`, data);
         opponentPlayer.socket.emit("playerMoveFromServer", {
           ...data,
+          playerType: "circle"
         });
       });
 
       opponentPlayer.socket.on("playerMoveFromClient", (data) => {
+        console.log(`Move from ${opponentPlayer.playerName} (cross):`, data);
         currentUser.socket.emit("playerMoveFromServer", {
           ...data,
+          playerType: "cross"
         });
       });
+
     } else {
+      console.log("No opponent found for:", currentUser.playerName);
       currentUser.socket.emit("OpponentNotFound");
     }
   });
 
   socket.on("disconnect", function () {
+    console.log("Disconnection:", socket.id);
+    
     const currentUser = allUsers[socket.id];
+    if (!currentUser) return;
+
     currentUser.online = false;
     currentUser.playing = false;
 
-    for (let index = 0; index < allRooms.length; index++) {
-      const { player1, player2 } = allRooms[index];
+    // Find and handle the room with the disconnected player
+    const roomIndex = allRooms.findIndex(room => 
+      room.player1.socket.id === socket.id || 
+      room.player2.socket.id === socket.id
+    );
 
-      if (player1.socket.id === socket.id) {
-        player2.socket.emit("opponentLeftMatch");
-        break;
+    if (roomIndex !== -1) {
+      const room = allRooms[roomIndex];
+      if (room.player1.socket.id === socket.id) {
+        room.player2.playing = false;
+        room.player2.socket.emit("opponentLeftMatch");
+      } else {
+        room.player1.playing = false;
+        room.player1.socket.emit("opponentLeftMatch");
       }
-
-      if (player2.socket.id === socket.id) {
-        player1.socket.emit("opponentLeftMatch");
-        break;
-      }
+      allRooms.splice(roomIndex, 1);
     }
+
+    delete allUsers[socket.id];
   });
 });
- 
 //drawing 
-
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
@@ -332,6 +563,8 @@ io.on("connection", (socket) => {
   });
 });
 
+// Connect to MongoDB
+connectDB();
 
 // Start the server
 server.listen(port, () => {
