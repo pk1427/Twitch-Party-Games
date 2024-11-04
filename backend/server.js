@@ -70,7 +70,7 @@ passport.use(
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.TWITCH_CLIENT_SECRET,
       callbackURL:
-        "http://https://twitch-party-games-2.onrender.com/auth/twitch/callback",
+        "https://twitch-party-games-2.onrender.com/auth/twitch/callback",
       scope: ["user:read:email", "channel:read:subscriptions"],
       passReqToCallback: true,
     },
@@ -173,9 +173,9 @@ app.get(
     // res.redirect(`http://localhost:4000/creator?role=${role}`);
 
     if (role === "streamer") {
-      res.redirect("http://localhost:4000/streamers");
+      res.redirect("https://twitch-party-games.vercel.app/streamers");
     } else {
-      res.redirect(`http://localhost:4000/creator?role=${role}`);
+      res.redirect(`https://twitch-party-games.vercel.app/creator?role=${role}`);
     }
   }
 );
@@ -195,7 +195,7 @@ app.get("/logout", (req, res, next) => {
     if (err) {
       return next(err);
     }
-    res.redirect("http://localhost:4000"); // Redirect to frontend after logout
+    res.redirect("https://twitch-party-games.vercel.app/"); // Redirect to frontend after logout
   });
 });
 
@@ -261,7 +261,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:4000", // Allow the frontend origin
+    origin: "*", // Allow the frontend origin
     methods: ["GET", "POST"],
     credentials: true,
   },
