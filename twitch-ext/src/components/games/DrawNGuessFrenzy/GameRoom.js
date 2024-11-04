@@ -7,9 +7,9 @@ import Lobby from "./Lobby";
 import ToolsPanel from "./ToolsPanel";
 import "./DrawNGuessFrenzy.css";
 
-// const socket = io("http://https://twitch-party-games.onrender.com");
-// const socket = io("http://https://twitch-party-games.onrender.com", { withCredentials: true });
-const socket = io("http://https://twitch-party-games.onrender.com"); // Adjust the port here
+// const socket = io("http://https://twitch-party-games-2.onrender.com");
+// const socket = io("http://https://twitch-party-games-2.onrender.com", { withCredentials: true });
+const socket = io("http://https://twitch-party-games-2.onrender.com"); // Adjust the port here
 
 function GameRoom() {
   const [roomId, setRoomId] = useState(null);

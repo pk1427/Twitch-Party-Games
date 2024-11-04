@@ -48,7 +48,7 @@ app.use(passport.session());
 //     {
 //       clientID: process.env.CLIENT_ID,
 //       clientSecret: process.env.TWITCH_CLIENT_SECRET,
-//       callbackURL: "http://https://twitch-party-games.onrender.com/auth/twitch/callback",
+//       callbackURL: "http://https://twitch-party-games-2.onrender.com/auth/twitch/callback",
 //       scope: ["user:read:email", "channel:read:subscriptions"], // Updated scopes if needed
 //     },
 //     (accessToken, refreshToken, profile, done) => {
@@ -70,7 +70,7 @@ passport.use(
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.TWITCH_CLIENT_SECRET,
       callbackURL:
-        "http://https://twitch-party-games.onrender.com/auth/twitch/callback",
+        "http://https://twitch-party-games-2.onrender.com/auth/twitch/callback",
       scope: ["user:read:email", "channel:read:subscriptions"],
       passReqToCallback: true,
     },

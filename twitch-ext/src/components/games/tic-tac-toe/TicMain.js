@@ -129,7 +129,7 @@ import "./TicMain.css";
 //     const username = result.value;
 //     setPlayerName(username);
 
-//     const newSocket = io("http://https://twitch-party-games.onrender.com", {
+//     const newSocket = io("http://https://twitch-party-games-2.onrender.com", {
 //       autoConnect: true,
 //     });
 
@@ -356,7 +356,7 @@ const App = () => {
     const username = result.value;
     setPlayerName(username);
 
-    const newSocket = io("http://https://twitch-party-games.onrender.com", {
+    const newSocket = io("http://https://twitch-party-games-2.onrender.com", {
       autoConnect: true,
     });
 

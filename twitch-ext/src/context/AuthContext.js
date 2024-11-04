@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = localStorage.getItem("token"); // Assuming the token is stored in local storage
         const response = await axios.get(
-          "http://https://twitch-party-games.onrender.com/user",
+          "http://https://twitch-party-games-2.onrender.com/user",
           {
             headers: {
               Authorization: `Bearer ${token}`, // Send token in the Authorization header

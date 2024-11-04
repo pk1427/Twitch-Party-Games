@@ -14,7 +14,7 @@ const Creator = () => {
     const fetchStreamers = async () => {
       try {
         const response = await fetch(
-          "http://https://twitch-party-games.onrender.com/auth/getAllStreamers"
+          "http://https://twitch-party-games-2.onrender.com/auth/getAllStreamers"
         );
         const data = await response.json();
         setStreamers(data);
