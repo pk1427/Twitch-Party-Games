@@ -8,11 +8,9 @@ const cors = require("cors");
 require("dotenv").config();
 const socketIO = require("socket.io");
 const TriviaGame = require("./services/TriviaGameService");
-const { Server } = require('socket.io');
+const { Server } = require("socket.io");
 const connectDB = require("./db");
 const Streamer = require("./models/Streamer");
-
-
 
 const app = express();
 
@@ -50,7 +48,7 @@ app.use(passport.session());
 //     {
 //       clientID: process.env.CLIENT_ID,
 //       clientSecret: process.env.TWITCH_CLIENT_SECRET,
-//       callbackURL: "http://localhost:3000/auth/twitch/callback",
+//       callbackURL: "http://https://twitch-party-games.onrender.com/auth/twitch/callback",
 //       scope: ["user:read:email", "channel:read:subscriptions"], // Updated scopes if needed
 //     },
 //     (accessToken, refreshToken, profile, done) => {
@@ -66,23 +64,20 @@ app.use(passport.session());
 //   )
 // );
 
-
-
 passport.use(
   new TwitchStrategy(
     {
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.TWITCH_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/auth/twitch/callback",
+      callbackURL:
+        "http://https://twitch-party-games.onrender.com/auth/twitch/callback",
       scope: ["user:read:email", "channel:read:subscriptions"],
       passReqToCallback: true,
     },
-    async (req,accessToken, refreshToken, profile, done) => {
-      
-      const state = JSON.parse(req.query.state || '{}');
+    async (req, accessToken, refreshToken, profile, done) => {
+      const state = JSON.parse(req.query.state || "{}");
       const role = state.role || "viewer";
-  
-      
+
       console.log("state:", state);
 
       const userProfile = {
@@ -101,7 +96,7 @@ passport.use(
         return done(null, userProfile); // Skip DB interaction for non-streamers
       }
 
-      console.log("hii")
+      console.log("hii");
 
       try {
         // Check if the streamer exists in the database
@@ -121,7 +116,10 @@ passport.use(
 
         return done(null, userProfile);
       } catch (error) {
-        console.error("Error storing or updating streamer in the database:", error);
+        console.error(
+          "Error storing or updating streamer in the database:",
+          error
+        );
         return done(error, null);
       }
     }
@@ -164,8 +162,6 @@ app.get("/auth/twitch/viewer", (req, res, next) => {
   })(req, res, next);
 });
 
-
-
 // Callback route for both user and streamer authentication
 app.get(
   "/auth/twitch/callback",
@@ -185,17 +181,13 @@ app.get(
 );
 
 app.get("/auth/getAllStreamers", async (req, res) => {
-
   try {
     const streamers = await Streamer.find();
     res.json(streamers);
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching streamers:", error);
   }
 });
-
-
 
 // Route to logout the user
 app.get("/logout", (req, res, next) => {
@@ -269,16 +261,15 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:4000', // Allow the frontend origin
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
+    origin: "http://localhost:4000", // Allow the frontend origin
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
 });
 
 io.use((socket, next) => {
   sessionMiddleware(socket.request, socket.request.res || {}, next);
 });
-
 
 // Handle WebSocket connections
 io.on("connection", (socket) => {
@@ -319,14 +310,10 @@ io.on("connection", (socket) => {
   });
 });
 
-
 //tic-tac-toe
-
 
 const allUsers = {};
 const allRooms = [];
-
-
 
 // io.on("connection", (socket) => {
 //   allUsers[socket.id] = {
@@ -401,28 +388,27 @@ const allRooms = [];
 //   });
 // });
 
-
 io.on("connection", (socket) => {
   console.log("New connection:", socket.id);
-  
+
   allUsers[socket.id] = {
     socket: socket,
     online: true,
     playing: false,
-    playerName: null  // Initialize playerName
+    playerName: null, // Initialize playerName
   };
 
   socket.on("request_to_play", (data) => {
-    console.log("Play request received:", data);  // Debug log
-    
+    console.log("Play request received:", data); // Debug log
+
     // Update current user's name
     const currentUser = allUsers[socket.id];
     currentUser.playerName = data.playerName;
-    
+
     console.log("Current user:", {
       id: socket.id,
       name: currentUser.playerName,
-      playing: currentUser.playing
+      playing: currentUser.playing,
     });
 
     // Find an available opponent
@@ -430,12 +416,17 @@ io.on("connection", (socket) => {
     for (const key in allUsers) {
       const user = allUsers[key];
       // Only match with players who are online, not playing, and have a name set
-      if (user.online && !user.playing && socket.id !== key && user.playerName) {
+      if (
+        user.online &&
+        !user.playing &&
+        socket.id !== key &&
+        user.playerName
+      ) {
         opponentPlayer = user;
         console.log("Found opponent:", {
           id: key,
           name: user.playerName,
-          playing: user.playing
+          playing: user.playing,
         });
         break;
       }
@@ -446,7 +437,7 @@ io.on("connection", (socket) => {
       if (!currentUser.playerName || !opponentPlayer.playerName) {
         console.error("Missing player names:", {
           currentUser: currentUser.playerName,
-          opponent: opponentPlayer.playerName
+          opponent: opponentPlayer.playerName,
         });
         return;
       }
@@ -456,39 +447,39 @@ io.on("connection", (socket) => {
       opponentPlayer.playing = true;
 
       const roomId = `room_${Date.now()}`;
-      
+
       // Create a new room
       const newRoom = {
         player1: {
           ...opponentPlayer,
-          role: 'cross'
+          role: "cross",
         },
         player2: {
           ...currentUser,
-          role: 'circle'
+          role: "circle",
         },
-        roomId: roomId
+        roomId: roomId,
       };
       allRooms.push(newRoom);
 
       console.log("Created room:", {
         roomId,
         player1: opponentPlayer.playerName,
-        player2: currentUser.playerName
+        player2: currentUser.playerName,
       });
 
       // Emit to current user (player2/circle)
       currentUser.socket.emit("OpponentFound", {
         opponentName: opponentPlayer.playerName,
         playingAs: "circle",
-        roomId: roomId
+        roomId: roomId,
       });
 
       // Emit to opponent (player1/cross)
       opponentPlayer.socket.emit("OpponentFound", {
         opponentName: currentUser.playerName,
         playingAs: "cross",
-        roomId: roomId
+        roomId: roomId,
       });
 
       // Set up move handlers
@@ -496,7 +487,7 @@ io.on("connection", (socket) => {
         console.log(`Move from ${currentUser.playerName} (circle):`, data);
         opponentPlayer.socket.emit("playerMoveFromServer", {
           ...data,
-          playerType: "circle"
+          playerType: "circle",
         });
       });
 
@@ -504,10 +495,9 @@ io.on("connection", (socket) => {
         console.log(`Move from ${opponentPlayer.playerName} (cross):`, data);
         currentUser.socket.emit("playerMoveFromServer", {
           ...data,
-          playerType: "cross"
+          playerType: "cross",
         });
       });
-
     } else {
       console.log("No opponent found for:", currentUser.playerName);
       currentUser.socket.emit("OpponentNotFound");
@@ -516,7 +506,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", function () {
     console.log("Disconnection:", socket.id);
-    
+
     const currentUser = allUsers[socket.id];
     if (!currentUser) return;
 
@@ -524,9 +514,10 @@ io.on("connection", (socket) => {
     currentUser.playing = false;
 
     // Find and handle the room with the disconnected player
-    const roomIndex = allRooms.findIndex(room => 
-      room.player1.socket.id === socket.id || 
-      room.player2.socket.id === socket.id
+    const roomIndex = allRooms.findIndex(
+      (room) =>
+        room.player1.socket.id === socket.id ||
+        room.player2.socket.id === socket.id
     );
 
     if (roomIndex !== -1) {
@@ -544,7 +535,7 @@ io.on("connection", (socket) => {
     delete allUsers[socket.id];
   });
 });
-//drawing 
+//drawing
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
@@ -570,4 +561,3 @@ connectDB();
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-

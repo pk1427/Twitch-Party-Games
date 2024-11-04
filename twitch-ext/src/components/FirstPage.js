@@ -23,11 +23,13 @@ const FirstPage = () => {
   };
 
   const handleLoginAsStreamer = () => {
-    window.location.href = "http://localhost:3000/auth/twitch/streamer"; // Redirect to streamer login
+    window.location.href =
+      "http://https://twitch-party-games.onrender.com/auth/twitch/streamer"; // Redirect to streamer login
   };
 
   const handleLoginAsViewer = () => {
-    window.location.href = "http://localhost:3000/auth/twitch/viewer"; // Redirect to viewer login
+    window.location.href =
+      "http://https://twitch-party-games.onrender.com/auth/twitch/viewer"; // Redirect to viewer login
   };
 
   return (
@@ -43,10 +45,10 @@ const FirstPage = () => {
               Login as Viewer
             </button>
             <button className="login-button" onClick={handleLoginAsStreamer}>
-            {/* <a href="/creators" className="login-button"> */}
+              {/* <a href="/creators" className="login-button"> */}
               <img src={twitchLogo} alt="Twitch Logo" className="twitch-logo" />
               Login as Streamer
-            {/* </a> */}
+              {/* </a> */}
             </button>
           </div>
         ) : (

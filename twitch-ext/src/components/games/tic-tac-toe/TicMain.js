@@ -1,7 +1,7 @@
 // import React, { useState, useEffect } from "react";
 // // import "./App.css";
 // import Square from "../tic-tac-toe/Square";
-import "./TicMain.css"
+import "./TicMain.css";
 // import { io } from "socket.io-client";
 // import Swal from "sweetalert2";
 
@@ -129,7 +129,7 @@ import "./TicMain.css"
 //     const username = result.value;
 //     setPlayerName(username);
 
-//     const newSocket = io("http://localhost:3000", {
+//     const newSocket = io("http://https://twitch-party-games.onrender.com", {
 //       autoConnect: true,
 //     });
 
@@ -224,8 +224,6 @@ import "./TicMain.css"
 // };
 
 // export default App;
-
-
 
 import React, { useState, useEffect } from "react";
 import Square from "./Square";
@@ -343,7 +341,7 @@ const App = () => {
 
   socket?.on("OpponentFound", function (data) {
     console.log(`data is: ${JSON.stringify(data)}`);
-    
+
     setPlayingAs(data.playingAs);
     setOpponentName(data.opponentName);
   });
@@ -358,7 +356,7 @@ const App = () => {
     const username = result.value;
     setPlayerName(username);
 
-    const newSocket = io("http://localhost:3000", {
+    const newSocket = io("http://https://twitch-party-games.onrender.com", {
       autoConnect: true,
     });
 
@@ -453,5 +451,3 @@ const App = () => {
 };
 
 export default App;
-
-

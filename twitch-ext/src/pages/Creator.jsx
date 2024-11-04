@@ -5,15 +5,17 @@ import "./Creator.css"; // Import CSS file
 const Creator = () => {
   const [streamers, setStreamers] = useState([]);
   const navigate = useNavigate();
-  
+
   const handleChange = () => {
     navigate("/lobby");
-  }
+  };
 
   useEffect(() => {
     const fetchStreamers = async () => {
       try {
-        const response = await fetch("http://localhost:3000/auth/getAllStreamers");
+        const response = await fetch(
+          "http://https://twitch-party-games.onrender.com/auth/getAllStreamers"
+        );
         const data = await response.json();
         setStreamers(data);
       } catch (error) {
@@ -41,7 +43,9 @@ const Creator = () => {
               <p className="streamer-status">
                 {streamer.isOnline ? (
                   <div>
-                    <button className="play-button" onClick={handleChange}>Play Game</button>
+                    <button className="play-button" onClick={handleChange}>
+                      Play Game
+                    </button>
                   </div>
                 ) : (
                   "Offline"
