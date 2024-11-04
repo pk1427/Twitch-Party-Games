@@ -19,7 +19,7 @@ const port = process.env.PORT || 3000;
 // Enable CORS to allow requests from frontend
 app.use(
   cors({
-    origin: "http://localhost:4000", // Frontend URL
+    origin: "*", // Frontend URL
     credentials: true, // Allows sending of cookies/session info
   })
 );
