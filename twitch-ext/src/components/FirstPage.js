@@ -24,12 +24,12 @@ const FirstPage = () => {
 
   const handleLoginAsStreamer = () => {
     window.location.href =
-      "http://https://twitch-party-games-2.onrender.com/auth/twitch/streamer"; // Redirect to streamer login
+      "https://twitch-party-games-2.onrender.com/auth/twitch/streamer"; // Redirect to streamer login
   };
 
   const handleLoginAsViewer = () => {
     window.location.href =
-      "http://https://twitch-party-games-2.onrender.com/auth/twitch/viewer"; // Redirect to viewer login
+      "https://twitch-party-games-2.onrender.com/auth/twitch/viewer"; // Redirect to viewer login
   };
 
   return (
