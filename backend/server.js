@@ -133,7 +133,7 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
-passport.authenticate("twitch", { failureRedirect: "/" }),
+// passport.authenticate("twitch", { failureRedirect: "/" }),
 
 // Authentication route for regular users
 app.get("/auth/twitch", passport.authenticate("twitch"));
