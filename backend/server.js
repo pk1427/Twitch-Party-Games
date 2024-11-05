@@ -3,6 +3,7 @@ const session = require("express-session");
 const tmi = require("tmi.js");
 const passport = require("passport");
 const TwitchStrategy = require("passport-twitch-new").Strategy;
+
 const http = require("http");
 const cors = require("cors");
 require("dotenv").config();
@@ -14,7 +15,7 @@ const Streamer = require("./models/Streamer");
 
 const app = express();
 
-const port = process.env.PORT || 3000 ;
+const port = process.env.PORT || 3000;
 
 // Enable CORS to allow requests from frontend
 app.use(
@@ -24,23 +25,23 @@ app.use(
   })
 );
 
-// Session configuration
-const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || "your_secret_key", // Use env variable for security
-  resave: false,
-  saveUninitialized: false, // Do not save uninitialized sessions
-  cookie: {
-    secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-    maxAge: 1000 * 60 * 60 * 24, // Session expiration (1 day)
-  },
-});
+// // Session configuration
+// const sessionMiddleware = session({
+//   secret: process.env.SESSION_SECRET || "your_secret_key", // Use env variable for security
+//   resave: false,
+//   saveUninitialized: false, // Do not save uninitialized sessions
+//   cookie: {
+//     secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+//     maxAge: 1000 * 60 * 60 * 24, // Session expiration (1 day)
+//   },
+// });
 
-// Use the session middleware in express and socket.io
-app.use(sessionMiddleware);
+// // Use the session middleware in express and socket.io
+// app.use(sessionMiddleware);
 
-// Initialize passport for Twitch OAuth
-app.use(passport.initialize());
-app.use(passport.session());
+// // Initialize passport for Twitch OAuth
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 // passport.use(
 //   new TwitchStrategy(
@@ -112,36 +113,178 @@ app.use(passport.session());
 //   done(null, obj);
 // });
 
+// // Authentication route for regular users
+// app.get("/auth/twitch", passport.authenticate("twitch"));
 
+// // Authentication route for streamers
+// app.get("/auth/twitch/streamer", (req, res, next) => {
+//   req.session.role = "streamer"; // Set session role for streamers
+//   const role = "streamer";
+//   passport.authenticate("twitch", {
+//     state: JSON.stringify({ role }),
+//     scope: [
+//       "user:read:email",
+//       "channel:read:subscriptions",
+//       "channel:manage:broadcast",
+//       "moderation:read",
+//     ],
+//   })(req, res, next);
+// });
+
+// // Authentication route for viewers
+// app.get("/auth/twitch/viewer", (req, res, next) => {
+//   req.session.role = "viewer"; // Set session role for viewers
+//   const role = "viewer";
+//   passport.authenticate("twitch", {
+//     state: JSON.stringify({ role }),
+//     scope: ["user:read:email"],
+//   })(req, res, next);
+// });
+
+// // Callback route for both user and streamer authentication
+// app.get(
+//   "/auth/twitch/callback",
+//   passport.authenticate("twitch", { failureRedirect: "/" }),
+//   (req, res) => {
+//     const state = req.query.state ? JSON.parse(req.query.state) : {};
+//     const role = state.role || "viewer"; // Default to viewer if no role
+//     req.user.role = role;
+//     // res.redirect(`http://localhost:4000/creator?role=${role}`);
+
+//     if (role === "streamer") {
+//       res.redirect("https://twitch-party-games.vercel.app/streamers");
+//     } else {
+//       res.redirect(`https://twitch-party-games.vercel.app/creator?role=${role}`);
+//     }
+//   }
+// );
+
+// app.get("/auth/getAllStreamers", async (req, res) => {
+//   try {
+//     const streamers = await Streamer.find();
+//     res.json(streamers);
+//   } catch (error) {
+//     console.error("Error fetching streamers:", error);
+//   }
+// });
+
+// // Route to logout the user
+// app.get("/logout", (req, res, next) => {
+//   req.logout((err) => {
+//     if (err) {
+//       return next(err);
+//     }
+//     res.redirect("https://twitch-party-games.vercel.app/"); // Redirect to frontend after logout
+//   });
+// });
+
+// // Route to fetch logged-in user's profile data
+// app.get("/user", (req, res) => {
+//   if (req.isAuthenticated()) {
+//     res.json({
+//       display_name: req.user.display_name,
+//       profile_image_url: req.user.profile_image_url,
+//       role: req.user.role,
+//     });
+//   } else {
+//     res.status(401).json({ message: "Not logged in" });
+//   }
+// });
+
+// // Basic route for server status and user display name
+// app.get("/", (req, res) => {
+//   res.send(
+//     `Server is running! User: ${
+//       req.user ? req.user.display_name : "Not logged in"
+//     }`
+//   );
+// });
+
+// // Twitch client setup for interacting with Twitch chat
+// const twitchClient = new tmi.Client({
+//   connection: {
+//     reconnect: true,
+//     secure: true,
+//   },
+//   identity: {
+//     username: process.env.TWITCH_USERNAME, // Your Twitch bot's username
+//     password: process.env.TWITCH_OAUTH_TOKEN, // OAuth token for the bot
+//   },
+//   channels: [process.env.TWITCH_CHANNEL], // Channels the bot should join
+// });
+
+// // Connect to Twitch chat
+// const connectToTwitch = async () => {
+//   try {
+//     await twitchClient.connect();
+//     console.log("Connected to Twitch chat!");
+//   } catch (err) {
+//     console.error("Error connecting to Twitch:", err);
+//   }
+// };
+
+// // Handle incoming chat messages from Twitch
+// twitchClient.on("chat", (channel, userstate, message, self) => {
+//   if (self) return;
+//   console.log(`Message from ${userstate.username}: ${message}`);
+//   // Handle incoming chat messages (e.g., broadcast to clients)
+// });
+
+// // Initialize Twitch connection
+// connectToTwitch();
+
+// Required imports - make sure these are at the top
+// const session = require('express-session');
+// // const passport = require('passport');
+// const TwitchStrategy = require('passport-twitch-new').Strategy;
+// const tmi = require('tmi.js');
+
+// Session configuration with more secure settings
+const sessionMiddleware = session({
+  secret: "your_random_secret_string_here", // Add a strong random string here
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: "lax",
+  },
+});
+
+// CORS configuration - add this before other middleware
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ["GET", "POST"],
+  })
+);
+
+app.use(sessionMiddleware);
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Updated Twitch Strategy with better error handling
 passport.use(
   new TwitchStrategy(
     {
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.TWITCH_CLIENT_SECRET,
-      callbackURL: "https://twitch-party-games-2.onrender.com/auth/twitch/callback",
+      callbackURL:
+        "https://twitch-party-games-2.onrender.com/auth/twitch/callback",
       scope: ["user:read:email", "channel:read:subscriptions"],
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
-        console.log('Twitch auth callback received:', { 
-          accessToken: accessToken ? 'present' : 'missing',
-          profile: profile ? 'present' : 'missing' 
+        console.log("Auth callback received:", {
+          accessToken: accessToken ? "present" : "missing",
+          profile: profile ? "present" : "missing",
         });
 
-        // Parse state with error handling
-        let state = {};
-        try {
-          state = JSON.parse(req.query.state || "{}");
-        } catch (e) {
-          console.error('State parsing error:', e);
-        }
-
+        const state = JSON.parse(req.query.state || "{}");
         const role = state.role || "viewer";
 
-        console.log("Parsed state:", state);
-
-        // Create user profile with accessToken
         const userProfile = {
           id: profile.id,
           display_name: profile.display_name || profile.username,
@@ -149,47 +292,28 @@ passport.use(
           profile_image_url: profile.profile_image_url || null,
           role: role,
           accessToken, // Store the access token
-          refreshToken // Store the refresh token if needed
         };
 
-        console.log("Created user profile:", {
-          ...userProfile,
-          accessToken: accessToken ? 'present' : 'missing'
-        });
-
-        // Handle viewer role
         if (userProfile.role !== "streamer") {
-          console.log("Processing viewer authentication");
           return done(null, userProfile);
         }
 
-        // Handle streamer role
-        console.log("Processing streamer authentication");
         try {
           let streamer = await Streamer.findOne({ id: profile.id });
-          console.log("Existing streamer found:", !!streamer);
-
           if (streamer) {
             streamer.isOnline = true;
-            streamer.accessToken = accessToken; // Update access token
-            streamer.lastLogin = new Date();
+            streamer.accessToken = accessToken;
             await streamer.save();
-            console.log("Updated existing streamer");
           } else {
-            streamer = new Streamer({ 
-              ...userProfile, 
-              isOnline: true,
-              lastLogin: new Date()
-            });
+            streamer = new Streamer({ ...userProfile, isOnline: true });
             await streamer.save();
-            console.log("Created new streamer");
           }
-          return done(null, userProfile);
         } catch (dbError) {
-          console.error("Database operation failed:", dbError);
+          console.error("Database error:", dbError);
           // Continue auth flow even if DB fails
-          return done(null, userProfile);
         }
+
+        return done(null, userProfile);
       } catch (error) {
         console.error("Authentication error:", error);
         return done(error, null);
@@ -198,35 +322,35 @@ passport.use(
   )
 );
 
-// Serialize user for the session
-passport.serializeUser((user, done) => {
-  try {
-    console.log("Serializing user:", user.id);
-    done(null, user);
-  } catch (error) {
-    console.error("Serialization error:", error);
-    done(error, null);
-  }
+// Updated Twitch chat client configuration
+const twitchClient = new tmi.Client({
+  options: { debug: true },
+  connection: {
+    reconnect: true,
+    secure: true,
+  },
+  identity: {
+    username: process.env.TWITCH_USERNAME,
+    password: process.env.TWITCH_OAUTH_TOKEN, // Make sure this includes the 'oauth:' prefix
+  },
+  channels: [process.env.TWITCH_CHANNEL],
 });
 
-// Deserialize user from the session
-passport.deserializeUser((obj, done) => {
+// Enhanced Twitch connection handling
+const connectToTwitch = async () => {
   try {
-    console.log("Deserializing user:", obj.id);
-    done(null, obj);
-  } catch (error) {
-    console.error("Deserialization error:", error);
-    done(error, null);
+    await twitchClient.connect();
+    console.log("Connected to Twitch chat!");
+  } catch (err) {
+    console.error("Error connecting to Twitch:", err);
+    // Implement reconnection logic
+    setTimeout(connectToTwitch, 5000); // Try to reconnect after 5 seconds
   }
-});
+};
 
-
-// Authentication route for regular users
-app.get("/auth/twitch", passport.authenticate("twitch"));
-
-// Authentication route for streamers
+// Updated route handlers with better error handling
 app.get("/auth/twitch/streamer", (req, res, next) => {
-  req.session.role = "streamer"; // Set session role for streamers
+  console.log("Initiating streamer auth");
   const role = "streamer";
   passport.authenticate("twitch", {
     state: JSON.stringify({ role }),
@@ -239,9 +363,8 @@ app.get("/auth/twitch/streamer", (req, res, next) => {
   })(req, res, next);
 });
 
-// Authentication route for viewers
 app.get("/auth/twitch/viewer", (req, res, next) => {
-  req.session.role = "viewer"; // Set session role for viewers
+  console.log("Initiating viewer auth");
   const role = "viewer";
   passport.authenticate("twitch", {
     state: JSON.stringify({ role }),
@@ -249,99 +372,48 @@ app.get("/auth/twitch/viewer", (req, res, next) => {
   })(req, res, next);
 });
 
-// Callback route for both user and streamer authentication
 app.get(
   "/auth/twitch/callback",
-  passport.authenticate("twitch", { failureRedirect: "/" }),
+  passport.authenticate("twitch", { failureRedirect: "/auth/failed" }),
   (req, res) => {
     const state = req.query.state ? JSON.parse(req.query.state) : {};
-    const role = state.role || "viewer"; // Default to viewer if no role
+    const role = state.role || "viewer";
     req.user.role = role;
-    // res.redirect(`http://localhost:4000/creator?role=${role}`);
 
-    if (role === "streamer") {
-      res.redirect("https://twitch-party-games.vercel.app/streamers");
-    } else {
-      res.redirect(`https://twitch-party-games.vercel.app/creator?role=${role}`);
-    }
+    const redirectURL =
+      role === "streamer"
+        ? `${process.env.FRONTEND_URL}/streamers`
+        : `${process.env.FRONTEND_URL}/creator?role=${role}`;
+
+    res.redirect(redirectURL);
   }
 );
 
-app.get("/auth/getAllStreamers", async (req, res) => {
-  try {
-    const streamers = await Streamer.find();
-    res.json(streamers);
-  } catch (error) {
-    console.error("Error fetching streamers:", error);
-  }
-});
-
-// Route to logout the user
-app.get("/logout", (req, res, next) => {
-  req.logout((err) => {
-    if (err) {
-      return next(err);
-    }
-    res.redirect("https://twitch-party-games.vercel.app/"); // Redirect to frontend after logout
+// Add error handling route
+app.get("/auth/failed", (req, res) => {
+  res.status(401).json({
+    error: "Authentication failed",
+    message: "Unable to authenticate with Twitch",
   });
 });
 
-// Route to fetch logged-in user's profile data
-app.get("/user", (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({
-      display_name: req.user.display_name,
-      profile_image_url: req.user.profile_image_url,
-      role: req.user.role,
-    });
-  } else {
-    res.status(401).json({ message: "Not logged in" });
-  }
-});
-
-// Basic route for server status and user display name
-app.get("/", (req, res) => {
-  res.send(
-    `Server is running! User: ${
-      req.user ? req.user.display_name : "Not logged in"
-    }`
-  );
-});
-
-
-
-// Twitch client setup for interacting with Twitch chat
-const twitchClient = new tmi.Client({
-  connection: {
-    reconnect: true,
-    secure: true,
-  },
-  identity: {
-    username: process.env.TWITCH_USERNAME, // Your Twitch bot's username
-    password: process.env.TWITCH_OAUTH_TOKEN, // OAuth token for the bot
-  },
-  channels: [process.env.TWITCH_CHANNEL], // Channels the bot should join
-});
-
-// Connect to Twitch chat
-const connectToTwitch = async () => {
-  try {
-    await twitchClient.connect();
-    console.log("Connected to Twitch chat!");
-  } catch (err) {
-    console.error("Error connecting to Twitch:", err);
-  }
-};
-
-// Handle incoming chat messages from Twitch
-twitchClient.on("chat", (channel, userstate, message, self) => {
-  if (self) return;
-  console.log(`Message from ${userstate.username}: ${message}`);
-  // Handle incoming chat messages (e.g., broadcast to clients)
+// Enhanced error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Global error:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Something went wrong",
+  });
 });
 
 // Initialize Twitch connection
 connectToTwitch();
+
+// Export the session middleware if needed for Socket.IO
+module.exports = { sessionMiddleware };
 
 // HTTP server and WebSocket setup
 const server = http.createServer(app);
