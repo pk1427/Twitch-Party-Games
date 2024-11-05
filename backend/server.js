@@ -3,7 +3,6 @@ const session = require("express-session");
 const tmi = require("tmi.js");
 const passport = require("passport");
 const TwitchStrategy = require("passport-twitch-new").Strategy;
-
 const http = require("http");
 const cors = require("cors");
 require("dotenv").config();
@@ -15,7 +14,7 @@ const Streamer = require("./models/Streamer");
 
 const app = express();
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000 ;
 
 // Enable CORS to allow requests from frontend
 app.use(
@@ -200,6 +199,8 @@ app.use(
 //   );
 // });
 
+
+
 // // Twitch client setup for interacting with Twitch chat
 // const twitchClient = new tmi.Client({
 //   connection: {
@@ -233,55 +234,23 @@ app.use(
 // // Initialize Twitch connection
 // connectToTwitch();
 
-// Required imports - make sure these are at the top
-// const session = require('express-session');
-// // const passport = require('passport');
-// const TwitchStrategy = require('passport-twitch-new').Strategy;
-// const tmi = require('tmi.js');
-
-// Session configuration with more secure settings
-const sessionMiddleware = session({
-  secret: "your_random_secret_string_here", // Add a strong random string here
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: "lax",
-  },
-});
-
-// CORS configuration - add this before other middleware
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-    methods: ["GET", "POST"],
-  })
-);
 
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Updated Twitch Strategy with better error handling
+// Passport configuration for Twitch OAuth
 passport.use(
   new TwitchStrategy(
     {
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.TWITCH_CLIENT_SECRET,
-      callbackURL:
-        "https://twitch-party-games-2.onrender.com/auth/twitch/callback",
+      callbackURL: "https://twitch-party-games-2.onrender.com/auth/twitch/callback",
       scope: ["user:read:email", "channel:read:subscriptions"],
-      passReqToCallback: true,
+      passReqToCallback: true
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
-        console.log("Auth callback received:", {
-          accessToken: accessToken ? "present" : "missing",
-          profile: profile ? "present" : "missing",
-        });
-
         const state = JSON.parse(req.query.state || "{}");
         const role = state.role || "viewer";
 
@@ -291,129 +260,124 @@ passport.use(
           email: profile.email,
           profile_image_url: profile.profile_image_url || null,
           role: role,
-          accessToken, // Store the access token
+          accessToken
         };
 
-        if (userProfile.role !== "streamer") {
-          return done(null, userProfile);
-        }
-
-        try {
-          let streamer = await Streamer.findOne({ id: profile.id });
-          if (streamer) {
-            streamer.isOnline = true;
-            streamer.accessToken = accessToken;
-            await streamer.save();
-          } else {
-            streamer = new Streamer({ ...userProfile, isOnline: true });
-            await streamer.save();
+        // If role is "streamer", store user in the database
+        if (userProfile.role === "streamer") {
+          try {
+            let streamer = await Streamer.findOne({ id: profile.id });
+            if (streamer) {
+              streamer.isOnline = true;
+              streamer.accessToken = accessToken;
+              await streamer.save();
+            } else {
+              streamer = new Streamer({ ...userProfile, isOnline: true });
+              await streamer.save();
+            }
+          } catch (dbError) {
+            console.error('Database error:', dbError);
           }
-        } catch (dbError) {
-          console.error("Database error:", dbError);
-          // Continue auth flow even if DB fails
         }
 
         return done(null, userProfile);
       } catch (error) {
-        console.error("Authentication error:", error);
+        console.error('Authentication error:', error);
         return done(error, null);
       }
     }
   )
 );
 
-// Updated Twitch chat client configuration
-const twitchClient = new tmi.Client({
-  options: { debug: true },
-  connection: {
-    reconnect: true,
-    secure: true,
-  },
-  identity: {
-    username: process.env.TWITCH_USERNAME,
-    password: process.env.TWITCH_OAUTH_TOKEN, // Make sure this includes the 'oauth:' prefix
-  },
-  channels: [process.env.TWITCH_CHANNEL],
+// Serialize and deserialize user for session handling
+passport.serializeUser((user, done) => {
+  done(null, user);
 });
 
-// Enhanced Twitch connection handling
-const connectToTwitch = async () => {
-  try {
-    await twitchClient.connect();
-    console.log("Connected to Twitch chat!");
-  } catch (err) {
-    console.error("Error connecting to Twitch:", err);
-    // Implement reconnection logic
-    setTimeout(connectToTwitch, 5000); // Try to reconnect after 5 seconds
-  }
-};
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
 
-// Updated route handlers with better error handling
+// Route to initiate authentication for streamers
 app.get("/auth/twitch/streamer", (req, res, next) => {
-  console.log("Initiating streamer auth");
   const role = "streamer";
   passport.authenticate("twitch", {
     state: JSON.stringify({ role }),
-    scope: [
-      "user:read:email",
-      "channel:read:subscriptions",
-      "channel:manage:broadcast",
-      "moderation:read",
-    ],
+    scope: ["user:read:email", "channel:read:subscriptions", "channel:manage:broadcast", "moderation:read"]
   })(req, res, next);
 });
 
+// Route to initiate authentication for viewers
 app.get("/auth/twitch/viewer", (req, res, next) => {
-  console.log("Initiating viewer auth");
   const role = "viewer";
   passport.authenticate("twitch", {
     state: JSON.stringify({ role }),
-    scope: ["user:read:email"],
+    scope: ["user:read:email"]
   })(req, res, next);
 });
 
-app.get(
-  "/auth/twitch/callback",
+// Authentication callback
+app.get("/auth/twitch/callback",
   passport.authenticate("twitch", { failureRedirect: "/auth/failed" }),
   (req, res) => {
     const state = req.query.state ? JSON.parse(req.query.state) : {};
     const role = state.role || "viewer";
     req.user.role = role;
 
-    const redirectURL =
-      role === "streamer"
-        ? `${process.env.FRONTEND_URL}/streamers`
-        : `${process.env.FRONTEND_URL}/creator?role=${role}`;
+    const redirectURL = role === "streamer" 
+      ? `${process.env.FRONTEND_URL}/streamers`
+      : `${process.env.FRONTEND_URL}/creator?role=${role}`;
 
     res.redirect(redirectURL);
   }
 );
 
-// Add error handling route
-app.get("/auth/failed", (req, res) => {
+// Error handling for failed authentication
+app.get('/auth/failed', (req, res) => {
   res.status(401).json({
-    error: "Authentication failed",
-    message: "Unable to authenticate with Twitch",
+    error: 'Authentication failed',
+    message: 'Unable to authenticate with Twitch'
   });
 });
 
-// Enhanced error handling middleware
+// Error handling middleware for general server errors
 app.use((err, req, res, next) => {
-  console.error("Global error:", err);
+  console.error('Global error:', err);
   res.status(500).json({
-    error: "Internal Server Error",
-    message:
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Something went wrong",
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   });
 });
+
+// Twitch chat client setup
+const twitchClient = new tmi.Client({
+  options: { debug: true },
+  connection: {
+    reconnect: true,
+    secure: true
+  },
+  identity: {
+    username: process.env.TWITCH_USERNAME,
+    password: process.env.TWITCH_OAUTH_TOKEN
+  },
+  channels: [process.env.TWITCH_CHANNEL]
+});
+
+// Function to connect to Twitch chat with retry logic
+const connectToTwitch = async () => {
+  try {
+    await twitchClient.connect();
+    console.log('Connected to Twitch chat!');
+  } catch (err) {
+    console.error('Error connecting to Twitch:', err);
+    setTimeout(connectToTwitch, 5000); // Retry after 5 seconds
+  }
+};
 
 // Initialize Twitch connection
 connectToTwitch();
 
-// Export the session middleware if needed for Socket.IO
-module.exports = { sessionMiddleware };
+
 
 // HTTP server and WebSocket setup
 const server = http.createServer(app);
