@@ -42,76 +42,184 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// passport.use(
+//   new TwitchStrategy(
+//     {
+//       clientID: process.env.CLIENT_ID,
+//       clientSecret: process.env.TWITCH_CLIENT_SECRET,
+//       callbackURL:
+//         "https://twitch-party-games-2.onrender.com/auth/twitch/callback",
+//       scope: ["user:read:email", "channel:read:subscriptions"],
+//       passReqToCallback: true,
+//     },
+//     async (req, accessToken, refreshToken, profile, done) => {
+//       const state = JSON.parse(req.query.state || "{}");
+//       const role = state.role || "viewer";
+
+//       console.log("state:", state);
+
+//       const userProfile = {
+//         id: profile.id,
+//         display_name: profile.display_name || profile.username,
+//         email: profile.email,
+//         profile_image_url: profile.profile_image_url || null,
+//         // role: profile.display_name === process.env.TWITCH_STREAMER_NAME ? "streamer" : "viewer",
+//         role: role,
+//       };
+
+//       console.log("User profile:", userProfile);
+
+//       // Allow only users with "streamer" role to save in the database
+//       if (userProfile.role !== "streamer") {
+//         return done(null, userProfile); // Skip DB interaction for non-streamers
+//       }
+
+//       console.log("hii");
+
+//       try {
+//         // Check if the streamer exists in the database
+//         let streamer = await Streamer.findOne({ id: profile.id });
+
+//         console.log("Streamer:", streamer);
+
+//         if (streamer) {
+//           // Update existing streamer's online status
+//           streamer.isOnline = true;
+//           await streamer.save();
+//         } else {
+//           // Create a new streamer document
+//           streamer = new Streamer({ ...userProfile, isOnline: true });
+//           await streamer.save();
+//         }
+
+//         return done(null, userProfile);
+//       } catch (error) {
+//         console.error(
+//           "Error storing or updating streamer in the database:",
+//           error
+//         );
+//         return done(error, null);
+//       }
+//     }
+//   )
+// );
+
+// passport.serializeUser((user, done) => {
+//   done(null, user);
+// });
+
+// passport.deserializeUser((obj, done) => {
+//   done(null, obj);
+// });
+
+
 passport.use(
   new TwitchStrategy(
     {
       clientID: process.env.CLIENT_ID,
       clientSecret: process.env.TWITCH_CLIENT_SECRET,
-      callbackURL:
-        "https://twitch-party-games-2.onrender.com/auth/twitch/callback",
+      callbackURL: "https://twitch-party-games-2.onrender.com/auth/twitch/callback",
       scope: ["user:read:email", "channel:read:subscriptions"],
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
-      const state = JSON.parse(req.query.state || "{}");
-      const role = state.role || "viewer";
-
-      console.log("state:", state);
-
-      const userProfile = {
-        id: profile.id,
-        display_name: profile.display_name || profile.username,
-        email: profile.email,
-        profile_image_url: profile.profile_image_url || null,
-        // role: profile.display_name === process.env.TWITCH_STREAMER_NAME ? "streamer" : "viewer",
-        role: role,
-      };
-
-      console.log("User profile:", userProfile);
-
-      // Allow only users with "streamer" role to save in the database
-      if (userProfile.role !== "streamer") {
-        return done(null, userProfile); // Skip DB interaction for non-streamers
-      }
-
-      console.log("hii");
-
       try {
-        // Check if the streamer exists in the database
-        let streamer = await Streamer.findOne({ id: profile.id });
+        console.log('Twitch auth callback received:', { 
+          accessToken: accessToken ? 'present' : 'missing',
+          profile: profile ? 'present' : 'missing' 
+        });
 
-        console.log("Streamer:", streamer);
-
-        if (streamer) {
-          // Update existing streamer's online status
-          streamer.isOnline = true;
-          await streamer.save();
-        } else {
-          // Create a new streamer document
-          streamer = new Streamer({ ...userProfile, isOnline: true });
-          await streamer.save();
+        // Parse state with error handling
+        let state = {};
+        try {
+          state = JSON.parse(req.query.state || "{}");
+        } catch (e) {
+          console.error('State parsing error:', e);
         }
 
-        return done(null, userProfile);
+        const role = state.role || "viewer";
+
+        console.log("Parsed state:", state);
+
+        // Create user profile with accessToken
+        const userProfile = {
+          id: profile.id,
+          display_name: profile.display_name || profile.username,
+          email: profile.email,
+          profile_image_url: profile.profile_image_url || null,
+          role: role,
+          accessToken, // Store the access token
+          refreshToken // Store the refresh token if needed
+        };
+
+        console.log("Created user profile:", {
+          ...userProfile,
+          accessToken: accessToken ? 'present' : 'missing'
+        });
+
+        // Handle viewer role
+        if (userProfile.role !== "streamer") {
+          console.log("Processing viewer authentication");
+          return done(null, userProfile);
+        }
+
+        // Handle streamer role
+        console.log("Processing streamer authentication");
+        try {
+          let streamer = await Streamer.findOne({ id: profile.id });
+          console.log("Existing streamer found:", !!streamer);
+
+          if (streamer) {
+            streamer.isOnline = true;
+            streamer.accessToken = accessToken; // Update access token
+            streamer.lastLogin = new Date();
+            await streamer.save();
+            console.log("Updated existing streamer");
+          } else {
+            streamer = new Streamer({ 
+              ...userProfile, 
+              isOnline: true,
+              lastLogin: new Date()
+            });
+            await streamer.save();
+            console.log("Created new streamer");
+          }
+          return done(null, userProfile);
+        } catch (dbError) {
+          console.error("Database operation failed:", dbError);
+          // Continue auth flow even if DB fails
+          return done(null, userProfile);
+        }
       } catch (error) {
-        console.error(
-          "Error storing or updating streamer in the database:",
-          error
-        );
+        console.error("Authentication error:", error);
         return done(error, null);
       }
     }
   )
 );
 
+// Serialize user for the session
 passport.serializeUser((user, done) => {
-  done(null, user);
+  try {
+    console.log("Serializing user:", user.id);
+    done(null, user);
+  } catch (error) {
+    console.error("Serialization error:", error);
+    done(error, null);
+  }
 });
 
+// Deserialize user from the session
 passport.deserializeUser((obj, done) => {
-  done(null, obj);
+  try {
+    console.log("Deserializing user:", obj.id);
+    done(null, obj);
+  } catch (error) {
+    console.error("Deserialization error:", error);
+    done(error, null);
+  }
 });
-// passport.authenticate("twitch", { failureRedirect: "/" }),
+
 
 // Authentication route for regular users
 app.get("/auth/twitch", passport.authenticate("twitch"));
