@@ -14,7 +14,7 @@ const Streamer = require("./models/Streamer");
 
 const app = express();
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000 ;
 
 // Enable CORS to allow requests from frontend
 app.use(
@@ -133,6 +133,7 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
+passport.authenticate("twitch", { failureRedirect: "/" }),
 
 // Authentication route for regular users
 app.get("/auth/twitch", passport.authenticate("twitch"));
@@ -220,6 +221,8 @@ app.get("/", (req, res) => {
     }`
   );
 });
+
+
 
 // Twitch client setup for interacting with Twitch chat
 const twitchClient = new tmi.Client({
