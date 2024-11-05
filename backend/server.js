@@ -42,28 +42,6 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Configure Passport to use Twitch OAuth
-// passport.use(
-//   new TwitchStrategy(
-//     {
-//       clientID: process.env.CLIENT_ID,
-//       clientSecret: process.env.TWITCH_CLIENT_SECRET,
-//       callbackURL: "http://https://twitch-party-games-2.onrender.com/auth/twitch/callback",
-//       scope: ["user:read:email", "channel:read:subscriptions"], // Updated scopes if needed
-//     },
-//     (accessToken, refreshToken, profile, done) => {
-//       const userProfile = {
-//         id: profile.id,
-//         display_name: profile.display_name || profile.username, // Use display_name if available
-//         email: profile.email,
-//         profile_image_url: profile.profile_image_url || null, // Handle missing profile image
-//         role: profile.display_name === process.env.TWITCH_STREAMER_NAME ? "streamer" : "viewer",
-//       };
-//       return done(null, userProfile); // Pass user profile to the session
-//     }
-//   )
-// );
-
 passport.use(
   new TwitchStrategy(
     {
